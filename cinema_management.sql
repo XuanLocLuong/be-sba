@@ -10,12 +10,15 @@ CREATE TABLE Roles (
 -- 2. Users
 CREATE TABLE Users (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
+    username VARCHAR(50) UNIQUE NULL,
+    password VARCHAR(255) NULL,
     full_name VARCHAR(100),
     email VARCHAR(100) UNIQUE NOT NULL,
     phone VARCHAR(15),
     role_id INT,
+    provider VARCHAR(20) DEFAULT 'LOCAL',
+    provider_id VARCHAR(255) NULL,
+    avatar_url VARCHAR(255),
     reset_token VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (role_id) REFERENCES Roles(id)
@@ -54,9 +57,10 @@ CREATE TABLE Showtimes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     movie_id INT,
     room_id INT,
-    start_time TIMESTAMP,
-    end_time TIMESTAMP,
-    base_price DOUBLE,
+    start_time TIMESTAMP NOT NULL,
+    end_time TIMESTAMP NOT NULL,
+    base_price DOUBLE NOT NULL,
+    status VARCHAR(20) DEFAULT 'ACTIVE',
     FOREIGN KEY (movie_id) REFERENCES Movies(id),
     FOREIGN KEY (room_id) REFERENCES Rooms(id)
 );
@@ -129,37 +133,3 @@ CREATE TABLE Payments (
     payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (booking_id) REFERENCES Bookings(id)
 );
-
--- Thêm Roles
-INSERT INTO Roles (role_name) VALUES ('ADMIN'), ('STAFF'), ('USER');
-
--- Thêm Users (Pass giả định)
-INSERT INTO Users (username, password, full_name, email, role_id) VALUES 
-('hiepbq', 'hash_pass_123', 'Bui Quang Hiep', 'hiep@fpt.edu.vn', 1),
-('customer01', 'hash_pass_456', 'Nguyen Van A', 'vana@gmail.com', 3);
-
--- Thêm Movies
-INSERT INTO Movies (title, duration_minutes, status) VALUES 
-('Spider-Man: No Way Home', 148, 'ONGOING'),
-('Dune: Part Two', 166, 'UPCOMING');
-
--- Thêm Room & Seats
-INSERT INTO Rooms (name, total_seats) VALUES ('Cinema 01', 50);
-INSERT INTO Seats (room_id, row_name, seat_number, seat_type) VALUES 
-(1, 'A', 1, 'NORMAL'),
-(1, 'A', 2, 'NORMAL'),
-(1, 'H', 5, 'VIP');
-
--- Thêm Showtime
-INSERT INTO Showtimes (movie_id, room_id, start_time, base_price) VALUES 
-(1, 1, '2026-02-15 19:00:00', 80000);
-
--- Khởi tạo trạng thái ghế cho suất chiếu
-INSERT INTO Seat_Status (showtime_id, seat_id, status) VALUES 
-(1, 1, 'AVAILABLE'),
-(1, 2, 'AVAILABLE'),
-(1, 3, 'AVAILABLE');
-
--- Thêm Voucher
-INSERT INTO Vouchers (code, discount_percent, max_discount_amount, expiry_date) VALUES 
-('CHAO2026', 10, 20000, '2026-12-31');
