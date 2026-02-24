@@ -83,7 +83,13 @@ CREATE TABLE Vouchers (
     code VARCHAR(50) UNIQUE NOT NULL,
     discount_percent INT,
     max_discount_amount DOUBLE,
-    expiry_date DATE
+    min_order_value DOUBLE DEFAULT 0,
+    status TINYINT(1) DEFAULT 1,
+    quantity INT NOT NULL,
+    used_count INT DEFAULT 0,
+    start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expiry_date DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 9. Bookings
