@@ -38,6 +38,8 @@ public class SecurityConfig {
             "/api/auth/**",
             "/api/users/register",
             "/api/movies/public/**",
+            "/api/vouchers/public/**",
+            "/api/seats/public/**",
             "/api/showtimes/public/**",
             "/error"
     };
@@ -75,7 +77,7 @@ public class SecurityConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:3000")
+                        .allowedOrigins("http://localhost:5173")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);

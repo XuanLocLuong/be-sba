@@ -80,4 +80,10 @@ public class MovieService {
 
         movieRepository.save(movie);
     }
+
+    public List<MovieResponse> getUpcomingMovies() {
+        return movieRepository.findByStatus("UPCOMING").stream()
+                .map(MovieResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
 }

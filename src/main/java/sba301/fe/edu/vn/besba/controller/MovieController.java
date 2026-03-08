@@ -27,6 +27,12 @@ public class MovieController extends BaseController {
         return wrapSuccess(movieService.getActiveMovies());
     }
 
+    // Lấy danh sách phim đang chiếu public
+    @GetMapping("/public/upcoming")
+    public BaseResponse<List<MovieResponse>> getUpcomingMovies() {
+        return wrapSuccess(movieService.getUpcomingMovies());
+    }
+
     // Xem chi tiết một bộ phim
     @GetMapping("/public/{id}")
     public BaseResponse<MovieResponse> getMovieById(@PathVariable Integer id) {
