@@ -8,7 +8,9 @@ import sba301.fe.edu.vn.besba.base.BaseController;
 import sba301.fe.edu.vn.besba.base.BaseResponse;
 import sba301.fe.edu.vn.besba.dto.request.VoucherRequest;
 import sba301.fe.edu.vn.besba.dto.response.VoucherResponse;
+import sba301.fe.edu.vn.besba.dto.response.VoucherUsageResponse;
 import sba301.fe.edu.vn.besba.service.VoucherService;
+import sba301.fe.edu.vn.besba.service.VoucherUsageService;
 
 import java.util.List;
 
@@ -18,6 +20,7 @@ import java.util.List;
 public class VoucherController extends BaseController {
 
     private final VoucherService voucherService;
+    private final VoucherUsageService voucherUsageService;
 
     @GetMapping
     @PreAuthorize("hasAuthority('ADMIN')")
@@ -42,5 +45,11 @@ public class VoucherController extends BaseController {
     public BaseResponse<String> deleteVoucher(@PathVariable Integer id) {
         voucherService.deleteVoucher(id);
         return wrapSuccess("Cập nhật trạng thái voucher thành công!");
+    }
+
+    @GetMapping("/{id}/usages")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public BaseResponse<List<VoucherUsageResponse>> getVoucherUsages(@PathVariable Integer id) {
+        return wrapSuccess(voucherUsageService.getUsagesByVoucherId(id));
     }
 }
