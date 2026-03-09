@@ -37,5 +37,6 @@ public class Seat {
     private List<Ticket> tickets;
 
     @Column(name = "additional_price")
-    private Double additionalPrice;
+    @Builder.Default
+    private Double additionalPrice = 0.0;
 }

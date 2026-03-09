@@ -2,6 +2,7 @@ package sba301.fe.edu.vn.besba.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import sba301.fe.edu.vn.besba.base.BaseController;
@@ -49,5 +50,18 @@ public class RoomController extends BaseController {
     public BaseResponse<String> deleteRoom(@PathVariable Integer id) {
         roomService.deleteRoom(id);
         return wrapSuccess("Xóa phòng chiếu thành công!");
+    }
+
+    @PatchMapping("/seats/{seatId}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public BaseResponse<String> updateSeatType(@PathVariable Integer seatId, @RequestParam String type) {
+        roomService.updateSeatType(seatId, type);
+        return wrapSuccess("Cập nhật loại ghế thành công");
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public BaseResponse<RoomResponse> getRoomById(@PathVariable Integer id) {
+        return wrapSuccess(roomService.getRoomById(id));
     }
 }

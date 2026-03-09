@@ -11,6 +11,7 @@ public class SeatResponse {
     private String rowName;
     private Integer seatNumber;
     private String seatType;
+    private Double additionalPrice;
 
     public static SeatResponse fromEntity(Seat seat) {
         return SeatResponse.builder()
@@ -18,6 +19,7 @@ public class SeatResponse {
                 .rowName(seat.getRowName())
                 .seatNumber(seat.getSeatNumber())
                 .seatType(seat.getSeatType())
+                .additionalPrice(seat.getAdditionalPrice())
                 .build();
     }
 }

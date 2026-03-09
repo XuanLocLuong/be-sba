@@ -30,4 +30,7 @@ public class Room {
 
     @OneToMany(mappedBy = "room")
     private List<Showtime> showtimes;
+
+    @Builder.Default
+    private String status = "ACTIVE";
 }

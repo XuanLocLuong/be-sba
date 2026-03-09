@@ -13,4 +13,7 @@ public class RoomRequest {
     @NotNull(message = "Tổng số ghế không được để trống")
     @Min(value = 1, message = "Số lượng ghế phải lớn hơn hoặc bằng 1")
     private Integer totalSeats;
+
+    private Integer vipSeatsCount = 0;
+    private Integer coupleSeatsCount = 0;
 }
