@@ -30,7 +30,7 @@ public class Movie {
     @Column(name = "release_date")
     private LocalDate releaseDate;
 
-    @Column(name = "poster_url")
+    @Column(name = "poster_url" ,columnDefinition = "TEXT")
     private String posterUrl;
 
     private String status; // UPCOMING, ONGOING, ENDED

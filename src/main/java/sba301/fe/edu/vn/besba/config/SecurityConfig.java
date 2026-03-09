@@ -2,8 +2,10 @@ package sba301.fe.edu.vn.besba.config;
 
 
 import lombok.RequiredArgsConstructor;
+import sba301.fe.edu.vn.besba.security.OAuth2AuthenticationSuccessHandler;
 import sba301.fe.edu.vn.besba.security.RestAuthenticationEntryPoint;
 import sba301.fe.edu.vn.besba.security.TokenAuthenticationFilter;
+import sba301.fe.edu.vn.besba.service.CustomOAuth2UserService;
 import sba301.fe.edu.vn.besba.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,10 +34,14 @@ public class SecurityConfig {
     private final TokenAuthenticationFilter tokenAuthenticationFilter;
     private final RestAuthenticationEntryPoint entryPoint;
     private final CustomUserDetailsService customUserDetailsService;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
     private static final String[] URL_WHITELIST = {
             "/auth/**",
             "/api/auth/**",
+            "/api/auth/forgot-password",
+            "/api/auth/reset-password",
             "/api/users/register",
             "/api/movies/public/**",
             "/api/showtimes/public/**",
@@ -64,11 +70,15 @@ public class SecurityConfig {
                         auth.requestMatchers(URL_WHITELIST).permitAll()
                                 .anyRequest().authenticated()
                 )
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+                )
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(entryPoint))
                 .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
@@ -82,4 +92,5 @@ public class SecurityConfig {
             }
         };
     }
+
 }

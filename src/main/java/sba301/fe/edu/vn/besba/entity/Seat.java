@@ -35,4 +35,7 @@ public class Seat {
 
     @OneToMany(mappedBy = "seat")
     private List<Ticket> tickets;
+
+    @Column(name = "additional_price")
+    private Double additionalPrice;
 }

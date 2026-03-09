@@ -1,6 +1,7 @@
 package sba301.fe.edu.vn.besba.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import lombok.*;
 
 import java.util.List;
@@ -21,9 +22,10 @@ public class Room {
     private String name;
 
     @Column(name = "total_seats")
+    @Min(value = 1, message = "Tổng số ghế phải tối thiểu là 1")
     private Integer totalSeats;
 
-    @OneToMany(mappedBy = "room")
+    @OneToMany(mappedBy = "room" , cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Seat> seats;
 
     @OneToMany(mappedBy = "room")
