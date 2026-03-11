@@ -22,6 +22,15 @@ public class VoucherController extends BaseController {
     private final VoucherService voucherService;
     private final VoucherUsageService voucherUsageService;
 
+    // --- PUBLIC API
+    
+    @GetMapping("/public")
+    public BaseResponse<List<VoucherResponse>> getActiveVoucher(){
+        return wrapSuccess(voucherService.getActiveVoucher());
+    }
+
+    // --- ADMIN API
+
     @GetMapping
     @PreAuthorize("hasAuthority('ADMIN')")
     public BaseResponse<List<VoucherResponse>> getAllVouchers() {

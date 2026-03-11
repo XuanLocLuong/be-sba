@@ -10,6 +10,7 @@ import sba301.fe.edu.vn.besba.entity.Voucher;
 import sba301.fe.edu.vn.besba.exception.CustomException;
 import sba301.fe.edu.vn.besba.repository.VoucherRepository;
 
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,9 +20,18 @@ public class VoucherService {
 
     private final VoucherRepository voucherRepository;
 
+    public List<VoucherResponse> getActiveVoucher() {
+        Date now = new Date();
+        List<Voucher> vouchers = voucherRepository.findActiveVouchers(1, now);
+
+        return vouchers.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
     public List<VoucherResponse> getAllVouchers() {
         return voucherRepository.findAll().stream()
-                .map(VoucherResponse::fromEntity)
+                .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
@@ -43,7 +53,7 @@ public class VoucherService {
                 .usedCount(0)
                 .build();
 
-        return VoucherResponse.fromEntity(voucherRepository.save(voucher));
+        return convertToDto(voucherRepository.save(voucher));
     }
 
     @Transactional
@@ -51,7 +61,6 @@ public class VoucherService {
         Voucher voucher = voucherRepository.findById(id)
                 .orElseThrow(() -> new CustomException(404, "Không tìm thấy Voucher", HttpStatus.NOT_FOUND));
 
-        // Kiểm tra trùng mã code nếu có đổi code mới
         if (!voucher.getCode().equals(request.getCode()) && voucherRepository.existsByCode(request.getCode())) {
             throw new CustomException(400, "Mã Voucher đã tồn tại", HttpStatus.BAD_REQUEST);
         }
@@ -64,7 +73,7 @@ public class VoucherService {
         voucher.setStartDate(request.getStartDate());
         voucher.setExpiryDate(request.getExpiryDate());
 
-        return VoucherResponse.fromEntity(voucherRepository.save(voucher));
+        return convertToDto(voucherRepository.save(voucher));
     }
 
     @Transactional
@@ -72,11 +81,22 @@ public class VoucherService {
         Voucher voucher = voucherRepository.findById(id)
                 .orElseThrow(() -> new CustomException(404, "Không tìm thấy Voucher", HttpStatus.NOT_FOUND));
 
-        if (voucher.getStatus() == 1) {
-            voucher.setStatus(0);
-        } else {
-            voucher.setStatus(1);
-        }
+        voucher.setStatus(voucher.getStatus() == 1 ? 0 : 1);
         voucherRepository.save(voucher);
+    }
+
+    private VoucherResponse convertToDto(Voucher voucher) {
+        return VoucherResponse.builder()
+                .id(voucher.getId())
+                .code(voucher.getCode())
+                .discountPercent(voucher.getDiscountPercent())
+                .maxDiscountAmount(voucher.getMaxDiscountAmount())
+                .minOrderValue(voucher.getMinOrderValue())
+                .status(voucher.getStatus())
+                .quantity(voucher.getQuantity())
+                .usedCount(voucher.getUsedCount())
+                .startDate(voucher.getStartDate())
+                .expiryDate(voucher.getExpiryDate())
+                .build();
     }
 }

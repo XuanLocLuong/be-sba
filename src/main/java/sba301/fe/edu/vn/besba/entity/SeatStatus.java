@@ -28,5 +28,9 @@ public class SeatStatus {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private User user; // Biết ai đang giữ ghế tạm thời
+    private User user;
+
+    @ManyToOne
+    @JoinColumn(name = "booking_id")
+    private Booking booking;
 }

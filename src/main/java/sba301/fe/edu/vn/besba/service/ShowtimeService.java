@@ -24,9 +24,18 @@ public class ShowtimeService {
     private final SeatRepository seatRepository;
     private final SeatStatusRepository seatStatusRepository;
 
+    // Lấy tất cả lịch chiếu (Admin)
     public List<ShowtimeResponse> getAllShowtimes() {
         return showtimeRepository.findAll().stream()
-                .map(ShowtimeResponse::fromEntity)
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    // Lấy lịch chiếu theo phim (User)
+    public List<ShowtimeResponse> getCurrentShowtimeByMovie(Integer movieId) {
+        List<Showtime> showtimes = showtimeRepository.findCurrentShowtimeByMovieId(movieId, LocalDateTime.now());
+        return showtimes.stream()
+                .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
@@ -44,34 +53,41 @@ public class ShowtimeService {
             throw new CustomException(400, "Phòng chiếu đã có lịch vào khoảng thời gian này!", HttpStatus.BAD_REQUEST);
         }
 
-        Showtime showtime = Showtime.builder()
-                .movie(movie)
-                .room(room)
-                .startTime(request.getStartTime())
-                .endTime(calculatedEndTime)
-                .basePrice(request.getBasePrice())
-                .status("SCHEDULED")
-                .build();
-
-        Showtime savedShowtime = showtimeRepository.save(showtime);
+        Showtime showtime = showtimeRepository.save(Showtime.builder()
+                .movie(movie).room(room).startTime(request.getStartTime())
+                .endTime(calculatedEndTime).basePrice(request.getBasePrice())
+                .status("SCHEDULED").build());
 
         List<Seat> seats = seatRepository.findByRoomIdOrderByRowNameAscSeatNumberAsc(room.getId());
         List<SeatStatus> seatStatuses = seats.stream().map(seat -> SeatStatus.builder()
-                .showtime(savedShowtime)
-                .seat(seat)
-                .status("AVAILABLE")
-                .build()).collect(Collectors.toList());
+                .showtime(showtime).seat(seat).status("AVAILABLE").build())
+                .collect(Collectors.toList());
         seatStatusRepository.saveAll(seatStatuses);
 
-        return ShowtimeResponse.fromEntity(savedShowtime);
+        return convertToDto(showtime);
     }
 
     @Transactional
     public void cancelShowtime(Integer id) {
         Showtime showtime = showtimeRepository.findById(id)
                 .orElseThrow(() -> new CustomException(404, "Không tìm thấy lịch chiếu", HttpStatus.NOT_FOUND));
-
         showtime.setStatus("CANCELLED");
         showtimeRepository.save(showtime);
+    }
+
+    // Gộp logic chuyển đổi và đếm ghế trống
+    private ShowtimeResponse convertToDto(Showtime showtime) {
+        int availableSeats = showtimeRepository.countAvailableSeatsByShowtimeId(showtime.getId());
+        return ShowtimeResponse.builder()
+                .id(showtime.getId())
+                .movieId(showtime.getMovie().getId())
+                .movieTitle(showtime.getMovie().getTitle())
+                .roomId(showtime.getRoom().getId())
+                .roomName(showtime.getRoom().getName())
+                .startTime(showtime.getStartTime())
+                .endTime(showtime.getEndTime())
+                .basePrice(showtime.getBasePrice())
+                .availableSeats(availableSeats)
+                .build();
     }
 }
