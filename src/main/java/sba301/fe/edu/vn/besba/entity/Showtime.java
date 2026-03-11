@@ -40,4 +40,8 @@ public class Showtime {
 
     @OneToMany(mappedBy = "showtime")
     private List<Booking> bookings;
+
+    @Column(length = 20)
+    @Builder.Default
+    private String status = "SCHEDULED"; // SCHEDULED, NOW_SHOWING, ENDED, CANCELLED
 }

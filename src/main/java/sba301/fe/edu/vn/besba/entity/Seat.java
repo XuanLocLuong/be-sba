@@ -35,4 +35,8 @@ public class Seat {
 
     @OneToMany(mappedBy = "seat")
     private List<Ticket> tickets;
+
+    @Column(name = "additional_price")
+    @Builder.Default
+    private Double additionalPrice = 0.0;
 }

@@ -1,4 +1,4 @@
-package sba301.fe.edu.vn.besba.dto;
+package sba301.fe.edu.vn.besba.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -6,8 +6,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import sba301.fe.edu.vn.besba.base.BaseController;
 import sba301.fe.edu.vn.besba.base.BaseResponse;
-import sba301.fe.edu.vn.besba.dto.MovieRequest;
-import sba301.fe.edu.vn.besba.dto.MovieResponse;
+import sba301.fe.edu.vn.besba.dto.request.MovieRequest;
+import sba301.fe.edu.vn.besba.dto.response.MovieResponse;
 import sba301.fe.edu.vn.besba.service.MovieService;
 
 import java.util.List;
