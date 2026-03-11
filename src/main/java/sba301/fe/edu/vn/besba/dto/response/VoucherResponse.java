@@ -19,6 +19,7 @@ public class VoucherResponse {
     private Integer quantity;
     private Integer usedCount;
     private LocalDateTime startDate;
+    private String imageUrl;
     private Date expiryDate;
 
     public static VoucherResponse fromEntity(Voucher voucher) {
@@ -33,6 +34,7 @@ public class VoucherResponse {
                 .usedCount(voucher.getUsedCount())
                 .startDate(voucher.getStartDate())
                 .expiryDate(voucher.getExpiryDate())
+                .imageUrl(voucher.getImageUrl())
                 .build();
     }
 }

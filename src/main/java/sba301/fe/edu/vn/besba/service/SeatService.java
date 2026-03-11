@@ -69,14 +69,14 @@ public class SeatService {
     public void reserveSeats(Integer showtimeId, List<Integer> seatIds) {
         UserPrincipal currentUser = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = userRepository.findById(currentUser.getId())
-                .orElseThrow(() -> new CustomException(404, "User not found", null));
+                .orElseThrow(() -> new CustomException(404, "User not found", HttpStatus.NOT_FOUND));
 
         for (Integer seatId : seatIds) {
             SeatStatus seatStatus = seatStatusRepository.findByShowtime_IdAndSeat_Id(showtimeId, seatId)
-                    .orElseThrow(() -> new CustomException(404, "Seat not found in this showtime", null));
+                    .orElseThrow(() -> new CustomException(404, "Seat not found in this showtime", HttpStatus.NOT_FOUND));
 
             if (!"AVAILABLE".equals(seatStatus.getStatus())) {
-                throw new CustomException(400, "Seat " + seatId + " is not available", null);
+                throw new CustomException(400, "Seat " + seatId + " is not available", HttpStatus.BAD_REQUEST);
             }
 
             seatStatus.setStatus("RESERVED");

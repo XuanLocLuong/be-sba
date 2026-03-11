@@ -20,7 +20,7 @@ public class ShowtimeController extends BaseController {
     private final ShowtimeService showtimeService;
 
     // --- PUBLIC API
-    
+
     @GetMapping("/public/{movieId}")
     public BaseResponse<List<ShowtimeResponse>> getCurrentShowtimeByMovie(@PathVariable Integer movieId) {
         return wrapSuccess(showtimeService.getCurrentShowtimeByMovie(movieId));

@@ -48,6 +48,7 @@ public class VoucherService {
                 .minOrderValue(request.getMinOrderValue())
                 .quantity(request.getQuantity())
                 .startDate(request.getStartDate())
+                .imageUrl(request.getImageUrl())
                 .expiryDate(request.getExpiryDate())
                 .status(1)
                 .usedCount(0)
@@ -71,6 +72,7 @@ public class VoucherService {
         voucher.setMinOrderValue(request.getMinOrderValue());
         voucher.setQuantity(request.getQuantity());
         voucher.setStartDate(request.getStartDate());
+        voucher.setImageUrl(request.getImageUrl());
         voucher.setExpiryDate(request.getExpiryDate());
 
         return convertToDto(voucherRepository.save(voucher));
@@ -96,6 +98,7 @@ public class VoucherService {
                 .quantity(voucher.getQuantity())
                 .usedCount(voucher.getUsedCount())
                 .startDate(voucher.getStartDate())
+                .imageUrl(voucher.getImageUrl())
                 .expiryDate(voucher.getExpiryDate())
                 .build();
     }

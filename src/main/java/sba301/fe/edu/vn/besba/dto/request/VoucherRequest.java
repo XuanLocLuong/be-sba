@@ -31,4 +31,6 @@ public class VoucherRequest {
 
     @NotNull(message = "Ngày kết thúc không được để trống")
     private Date expiryDate;
+
+    private String imageUrl;
 }

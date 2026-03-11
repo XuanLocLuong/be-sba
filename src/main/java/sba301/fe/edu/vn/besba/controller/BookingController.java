@@ -21,12 +21,12 @@ public class BookingController extends BaseController {
     // --- ENDPOINTS CHO USER 
 
     @PostMapping("/bookings")
-    public BaseResponse<BookingResponse> createBooking(@RequestBody BookingRequest request) {
+    public BaseResponse<sba301.fe.edu.vn.besba.dto.BookingResponse> createBooking(@RequestBody BookingRequest request) {
         return wrapSuccess(bookingService.createBooking(request));
     }
 
     @PostMapping("/bookings/{bookingId}/confirm")
-    public BaseResponse<BookingResponse> confirmBooking(@PathVariable Integer bookingId) {
+    public BaseResponse<sba301.fe.edu.vn.besba.dto.BookingResponse> confirmBooking(@PathVariable Integer bookingId) {
         return wrapSuccess(bookingService.confirmBooking(bookingId));
     }
 

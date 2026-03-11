@@ -51,4 +51,7 @@ public class Voucher {
             startDate = LocalDateTime.now();
         }
     }
+
+    @Column(name = "image_url")
+    private String imageUrl;
 }

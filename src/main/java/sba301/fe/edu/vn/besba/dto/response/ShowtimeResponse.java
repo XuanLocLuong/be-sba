@@ -18,6 +18,7 @@ public class ShowtimeResponse {
     private LocalDateTime endTime;
     private Double basePrice;
     private String status;
+    private Integer availableSeats;
 
     public static ShowtimeResponse fromEntity(Showtime showtime) {
         return ShowtimeResponse.builder()

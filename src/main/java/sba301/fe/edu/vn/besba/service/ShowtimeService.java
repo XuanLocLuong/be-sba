@@ -24,14 +24,14 @@ public class ShowtimeService {
     private final SeatRepository seatRepository;
     private final SeatStatusRepository seatStatusRepository;
 
-    // Lấy tất cả lịch chiếu (Admin)
+    // Lấy tất cả lịch chiếu
     public List<ShowtimeResponse> getAllShowtimes() {
         return showtimeRepository.findAll().stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
-    // Lấy lịch chiếu theo phim (User)
+    // Lấy lịch chiếu theo phim
     public List<ShowtimeResponse> getCurrentShowtimeByMovie(Integer movieId) {
         List<Showtime> showtimes = showtimeRepository.findCurrentShowtimeByMovieId(movieId, LocalDateTime.now());
         return showtimes.stream()
@@ -75,7 +75,6 @@ public class ShowtimeService {
         showtimeRepository.save(showtime);
     }
 
-    // Gộp logic chuyển đổi và đếm ghế trống
     private ShowtimeResponse convertToDto(Showtime showtime) {
         int availableSeats = showtimeRepository.countAvailableSeatsByShowtimeId(showtime.getId());
         return ShowtimeResponse.builder()
@@ -88,6 +87,7 @@ public class ShowtimeService {
                 .endTime(showtime.getEndTime())
                 .basePrice(showtime.getBasePrice())
                 .availableSeats(availableSeats)
+                .status(showtime.getStatus())
                 .build();
     }
 }
