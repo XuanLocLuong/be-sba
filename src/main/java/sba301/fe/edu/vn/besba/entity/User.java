@@ -52,4 +52,8 @@ public class User {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
     }
+
+    @Builder.Default
+    @Column(nullable = false)
+    private String status = "ACTIVE";
 }

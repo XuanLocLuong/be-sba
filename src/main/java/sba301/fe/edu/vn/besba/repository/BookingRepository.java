@@ -9,5 +9,7 @@ import java.util.List;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Integer> {
+
     List<Booking> findByStatusAndCreatedAtBefore(String status, LocalDateTime time);
+    List<Booking> findAllByOrderByCreatedAtDesc();
 }

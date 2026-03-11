@@ -1,11 +1,12 @@
 package sba301.fe.edu.vn.besba.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sba301.fe.edu.vn.besba.dto.BookingRequest;
-import sba301.fe.edu.vn.besba.dto.BookingResponse;
+import sba301.fe.edu.vn.besba.dto.response.BookingResponse;
 import sba301.fe.edu.vn.besba.dto.TicketResponse;
 import sba301.fe.edu.vn.besba.entity.*;
 import sba301.fe.edu.vn.besba.exception.CustomException;
@@ -29,185 +30,118 @@ public class BookingService {
     private final UserRepository userRepository;
     private final VoucherRepository voucherRepository;
     private final VoucherUsageRepository voucherUsageRepository;
+  
+    public List<BookingResponse> getAllBookings() {
+        return bookingRepository.findAllByOrderByCreatedAtDesc().stream()
+                .map(BookingResponse::fromEntity)
+                .toList();
+    }
 
+    // Tạo đơn đặt vé
     @Transactional
     public BookingResponse createBooking(BookingRequest request) {
         UserPrincipal currentUser = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = userRepository.findById(currentUser.getId())
-                .orElseThrow(() -> new CustomException(404, "User not found", null));
+                .orElseThrow(() -> new CustomException(404, "User not found", HttpStatus.NOT_FOUND));
 
         Showtime showtime = showtimeRepository.findById(request.getShowtimeId())
-                .orElseThrow(() -> new CustomException(404, "Showtime not found", null));
+                .orElseThrow(() -> new CustomException(404, "Showtime not found", HttpStatus.NOT_FOUND));
 
-        // Lấy danh sách SeatStatus của các ghế được chọn
         List<SeatStatus> seatStatuses = seatStatusRepository.findByShowtime_Id(request.getShowtimeId()).stream()
                 .filter(ss -> request.getSeatIds().contains(ss.getSeat().getId()))
                 .collect(Collectors.toList());
 
-        // Kiểm tra tất cả đều do user này reserve
         for (SeatStatus ss : seatStatuses) {
             if (!"RESERVED".equals(ss.getStatus()) || !ss.getUser().getId().equals(user.getId())) {
-                throw new CustomException(400, "Some seats are not reserved by you", null);
+                throw new CustomException(400, "Some seats are not reserved by you", HttpStatus.BAD_REQUEST);
             }
         }
 
-        // Tính tổng tiền
         double totalAmount = seatStatuses.stream()
                 .mapToDouble(ss -> calculatePrice(ss.getSeat().getSeatType(), showtime.getBasePrice()))
                 .sum();
 
-        // Xử lý voucher nếu có
+        // Xử lý Voucher
         Voucher voucher = null;
         if (request.getVoucherId() != null) {
             voucher = voucherRepository.findById(request.getVoucherId())
-                    .orElseThrow(() -> new CustomException(404, "Voucher not found", null));
+                    .orElseThrow(() -> new CustomException(404, "Voucher not found", HttpStatus.NOT_FOUND));
             if (voucher.getExpiryDate().before(new java.util.Date())) {
-                throw new CustomException(400, "Voucher expired", null);
+                throw new CustomException(400, "Voucher expired", HttpStatus.BAD_REQUEST);
             }
-            double discount = totalAmount * voucher.getDiscountPercent() / 100;
-            if (discount > voucher.getMaxDiscountAmount()) {
-                discount = voucher.getMaxDiscountAmount();
-            }
+            double discount = Math.min(totalAmount * voucher.getDiscountPercent() / 100, voucher.getMaxDiscountAmount());
             totalAmount -= discount;
         }
 
-        // Tạo booking với status PENDING
-        Booking booking = Booking.builder()
-                .user(user)
-                .showtime(showtime)
-                .totalAmount(totalAmount)
-                .status("PENDING")
-                .createdAt(LocalDateTime.now())
-                .build();
-        booking = bookingRepository.save(booking);
+        Booking booking = bookingRepository.save(Booking.builder()
+                .user(user).showtime(showtime).totalAmount(totalAmount)
+                .status("PENDING").createdAt(LocalDateTime.now()).build());
 
-        // Gán booking cho từng SeatStatus (vẫn giữ status RESERVED)
         for (SeatStatus ss : seatStatuses) {
             ss.setBooking(booking);
             seatStatusRepository.save(ss);
         }
 
-        // Nếu có voucher, ghi nhận VoucherUsage
         if (voucher != null) {
-            VoucherUsage usage = VoucherUsage.builder()
-                    .voucher(voucher)
-                    .user(user)
-                    .booking(booking)
-                    .usedAt(LocalDateTime.now())
-                    .build();
-            voucherUsageRepository.save(usage);
+            voucherUsageRepository.save(VoucherUsage.builder()
+                    .voucher(voucher).user(user).booking(booking).usedAt(LocalDateTime.now()).build());
         }
 
-        // Trả về response
         return BookingResponse.builder()
-                .bookingId(booking.getId())
-                .totalAmount(booking.getTotalAmount())
-                .status(booking.getStatus())
-                .createdAt(booking.getCreatedAt())
-                .tickets(Collections.emptyList())
-                .build();
+                .bookingId(booking.getId()).totalAmount(booking.getTotalAmount())
+                .status(booking.getStatus()).createdAt(booking.getCreatedAt())
+                .tickets(Collections.emptyList()).build();
     }
 
-    private double calculatePrice(String seatType, Double basePrice) {
-        switch (seatType) {
-            case "VIP":
-                return basePrice * 1.5;
-            case "COUPLE":
-                return basePrice * 2.0;
-            default:
-                return basePrice;
-        }
-    }
-
+    // Xác nhận đơn sau khi thanh toán 
     @Transactional
     public BookingResponse confirmBooking(Integer bookingId) {
-        UserPrincipal currentUser = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        User user = userRepository.findById(currentUser.getId())
-                .orElseThrow(() -> new CustomException(404, "User not found", null));
-
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new CustomException(404, "Booking not found", null));
-
-        if (!booking.getUser().getId().equals(user.getId())) {
-            throw new CustomException(403, "You don't have permission to confirm this booking", null);
-        }
+                .orElseThrow(() -> new CustomException(404, "Booking not found", HttpStatus.NOT_FOUND));
 
         if (!"PENDING".equals(booking.getStatus())) {
-            throw new CustomException(400, "Booking already confirmed or cancelled", null);
+            throw new CustomException(400, "Trạng thái đơn không hợp lệ", HttpStatus.BAD_REQUEST);
         }
 
-        // Lấy danh sách SeatStatus thuộc booking này
         List<SeatStatus> seatStatuses = seatStatusRepository.findByBooking_Id(bookingId);
-
-        if (seatStatuses.isEmpty()) {
-            throw new CustomException(400, "No seats found for this booking", null);
-        }
-
-        // Tạo tickets
         List<Ticket> tickets = new ArrayList<>();
+
         for (SeatStatus ss : seatStatuses) {
-            Ticket ticket = Ticket.builder()
-                    .booking(booking)
-                    .seat(ss.getSeat())
+            Ticket ticket = ticketRepository.save(Ticket.builder()
+                    .booking(booking).seat(ss.getSeat())
                     .ticketPrice(calculatePrice(ss.getSeat().getSeatType(), booking.getShowtime().getBasePrice()))
-                    .qrCode(UUID.randomUUID().toString())
-                    .checkInStatus(false)
-                    .build();
-            tickets.add(ticketRepository.save(ticket));
+                    .qrCode(UUID.randomUUID().toString()).checkInStatus(false).build());
+            tickets.add(ticket);
 
             ss.setStatus("BOOKED");
             ss.setUser(null);
-            // giữ nguyên booking đã có
             seatStatusRepository.save(ss);
         }
 
-        // Cập nhật booking status thành PAID
         booking.setStatus("PAID");
         bookingRepository.save(booking);
 
-        // Tạo response
-        List<TicketResponse> ticketResponses = tickets.stream()
-                .map(t -> TicketResponse.builder()
-                        .ticketId(t.getId())
-                        .seatName(t.getSeat().getRowName() + t.getSeat().getSeatNumber())
-                        .price(t.getTicketPrice())
-                        .qrCode(t.getQrCode())
-                        .build())
-                .collect(Collectors.toList());
-
         return BookingResponse.builder()
-                .bookingId(booking.getId())
-                .totalAmount(booking.getTotalAmount())
-                .status(booking.getStatus())
-                .createdAt(booking.getCreatedAt())
-                .tickets(ticketResponses)
+                .bookingId(booking.getId()).status(booking.getStatus())
+                .tickets(tickets.stream().map(t -> TicketResponse.builder()
+                        .ticketId(t.getId()).seatName(t.getSeat().getRowName() + t.getSeat().getSeatNumber())
+                        .price(t.getTicketPrice()).qrCode(t.getQrCode()).build()).collect(Collectors.toList()))
                 .build();
     }
 
+    // User hủy đơn PENDING
     @Transactional
     public void cancelBooking(Integer bookingId) {
-        UserPrincipal currentUser = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        User user = userRepository.findById(currentUser.getId())
-                .orElseThrow(() -> new CustomException(404, "User not found", null));
-
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new CustomException(404, "Booking not found", null));
-
-        if (!booking.getUser().getId().equals(user.getId())) {
-            throw new CustomException(403, "Bạn không có quyền hủy đơn này", null);
-        }
+                .orElseThrow(() -> new CustomException(404, "Booking not found", HttpStatus.NOT_FOUND));
 
         if (!"PENDING".equals(booking.getStatus())) {
-            throw new CustomException(400, "Chỉ có thể hủy đơn đang chờ thanh toán", null);
+            throw new CustomException(400, "Chỉ có thể hủy đơn đang chờ thanh toán", HttpStatus.BAD_REQUEST);
         }
 
-        // Xóa tickets liên quan
         ticketRepository.deleteByBookingId(bookingId);
-
-        // Xóa voucher usage nếu có
         voucherUsageRepository.deleteByBookingId(bookingId);
-
-        // Lấy danh sách seat_status thuộc booking này
+        
         List<SeatStatus> seatStatuses = seatStatusRepository.findByBooking_Id(bookingId);
         for (SeatStatus ss : seatStatuses) {
             ss.setStatus("AVAILABLE");
@@ -215,8 +149,38 @@ public class BookingService {
             ss.setBooking(null);
             seatStatusRepository.save(ss);
         }
-
-        // Xóa booking
         bookingRepository.delete(booking);
+    }
+
+    // Admin hủy đơn 
+    @Transactional
+    public void cancelBookingByAdmin(Integer bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new CustomException(404, "Không tìm thấy đơn!", HttpStatus.NOT_FOUND));
+
+        if ("CANCELLED".equals(booking.getStatus())) {
+            throw new CustomException(400, "Đơn đã được hủy trước đó!", HttpStatus.BAD_REQUEST);
+        }
+
+        booking.setStatus("CANCELLED");
+        bookingRepository.save(booking);
+
+        List<Integer> seatIds = booking.getTickets().stream().map(t -> t.getSeat().getId()).collect(Collectors.toList());
+        if (!seatIds.isEmpty()) {
+            List<SeatStatus> seatStatuses = seatStatusRepository.findByShowtimeIdAndSeatIdIn(booking.getShowtime().getId(), seatIds);
+            for (SeatStatus ss : seatStatuses) {
+                ss.setStatus("AVAILABLE");
+                ss.setUser(null);
+            }
+            seatStatusRepository.saveAll(seatStatuses);
+        }
+    }
+
+    private double calculatePrice(String seatType, Double basePrice) {
+        return switch (seatType) {
+            case "VIP" -> basePrice * 1.5;
+            case "COUPLE" -> basePrice * 2.0;
+            default -> basePrice;
+        };
     }
 }
