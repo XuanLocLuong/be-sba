@@ -25,10 +25,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         // Tạo token từ email
         String token = jwtTokenUtil.generateToken(email);
 
-        // Chuyển hướng về React với token trên URL
-        String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:3000/oauth2/redirect")
+        String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:5173/oauth2/redirect")
                 .queryParam("token", token)
-                .build().toUriString();
+                .build().toUriString(); // Chuyển hướng về React với token
 
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }

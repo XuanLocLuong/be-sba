@@ -8,7 +8,7 @@ import sba301.fe.edu.vn.besba.base.BaseResponse;
 import sba301.fe.edu.vn.besba.dto.BookingRequest;
 import sba301.fe.edu.vn.besba.dto.response.BookingResponse;
 import sba301.fe.edu.vn.besba.service.BookingService;
-
+import sba301.fe.edu.vn.besba.dto.response.BookingResponseStaff;
 import java.util.List;
 
 @RestController
@@ -40,7 +40,7 @@ public class BookingController extends BaseController {
 
     @GetMapping("/admin/bookings")
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('STAFF')")
-    public BaseResponse<List<BookingResponse>> getAllBookings() {
+    public BaseResponse<List<BookingResponseStaff>> getAllBookings() {
         return wrapSuccess(bookingService.getAllBookings());
     }
 
@@ -49,5 +49,12 @@ public class BookingController extends BaseController {
     public BaseResponse<String> cancelBookingByAdmin(@PathVariable Integer id) {
         bookingService.cancelBooking(id);
         return wrapSuccess("Hủy đơn thành công và đã giải phóng ghế!");
+    }
+    @PutMapping("/admin/bookings/{id}/check-in")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('STAFF')")
+    public BaseResponse<String> checkInBookingByAdmin(@PathVariable Integer id) {
+        // Gọi hàm checkInBooking bên trong BookingService
+        bookingService.checkInBooking(id);
+        return wrapSuccess("Soát vé toàn bộ đơn thành công!");
     }
 }

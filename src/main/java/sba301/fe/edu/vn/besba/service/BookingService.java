@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sba301.fe.edu.vn.besba.dto.BookingRequest;
 import sba301.fe.edu.vn.besba.dto.TicketResponse;
-// Import mặc định cho các phương thức danh sách/admin
+import sba301.fe.edu.vn.besba.dto.response.BookingResponseStaff;
 import sba301.fe.edu.vn.besba.dto.response.BookingResponse;
 import sba301.fe.edu.vn.besba.entity.*;
 import sba301.fe.edu.vn.besba.exception.CustomException;
@@ -32,9 +32,9 @@ public class BookingService {
     private final VoucherRepository voucherRepository;
     private final VoucherUsageRepository voucherUsageRepository;
 
-    public List<BookingResponse> getAllBookings() {
+    public List<BookingResponseStaff> getAllBookings() {
         return bookingRepository.findAllByOrderByCreatedAtDesc().stream()
-                .map(BookingResponse::fromEntity)
+                .map(BookingResponseStaff::fromEntity)
                 .toList();
     }
 
@@ -218,5 +218,30 @@ public class BookingService {
             case "COUPLE" -> basePrice * 2.0;
             default -> basePrice;
         };
+    }
+
+    @Transactional
+    public void checkInBooking(Integer bookingId) {
+
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new CustomException(404, "Không tìm thấy đơn vé!", HttpStatus.NOT_FOUND));
+
+        if (!"PAID".equals(booking.getStatus()) && !"CONFIRMED".equals(booking.getStatus())) {
+            throw new CustomException(400, "Chỉ có thể soát vé cho đơn hàng đã thanh toán thành công!", HttpStatus.BAD_REQUEST);
+        }
+
+        booking.setStatus("COMPLETED");
+        bookingRepository.save(booking);
+
+        List<Ticket> tickets = booking.getTickets();
+        if (tickets != null && !tickets.isEmpty()) {
+            for (Ticket ticket : tickets) {
+                if (!ticket.getCheckInStatus()) {
+                    ticket.setCheckInStatus(true);
+                    ticket.setCheckInTime(LocalDateTime.now());
+                }
+            }
+            ticketRepository.saveAll(tickets);
+        }
     }
 }

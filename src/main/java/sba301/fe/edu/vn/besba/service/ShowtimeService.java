@@ -41,30 +41,48 @@ public class ShowtimeService {
 
     @Transactional
     public ShowtimeResponse createShowtime(ShowtimeRequest request) {
+
         Movie movie = movieRepository.findById(request.getMovieId())
                 .orElseThrow(() -> new CustomException(404, "Phim không tồn tại", HttpStatus.NOT_FOUND));
+
         Room room = roomRepository.findById(request.getRoomId())
-                .orElseThrow(() -> new CustomException(404, "Phòng không tồn tại", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(404, "Phòng chiếu không tồn tại", HttpStatus.NOT_FOUND));
+
+        List<Seat> seats = seatRepository.findByRoomIdOrderByRowNameAscSeatNumberAsc(room.getId());
+
+        if (seats == null || seats.isEmpty()) {
+            throw new CustomException(400, "Phòng chiếu [" + room.getName() + "] chưa được thiết lập sơ đồ ghế. Vui lòng thêm ghế cho phòng này trước khi tạo suất chiếu!", HttpStatus.BAD_REQUEST);
+        }
 
         LocalDateTime calculatedEndTime = request.getStartTime().plusMinutes(movie.getDurationMinutes() + 15);
 
-        // Kiểm tra trùng lịch phòng
         if (showtimeRepository.isRoomBusy(room.getId(), request.getStartTime(), calculatedEndTime, -1)) {
             throw new CustomException(400, "Phòng chiếu đã có lịch vào khoảng thời gian này!", HttpStatus.BAD_REQUEST);
         }
 
-        Showtime showtime = showtimeRepository.save(Showtime.builder()
-                .movie(movie).room(room).startTime(request.getStartTime())
-                .endTime(calculatedEndTime).basePrice(request.getBasePrice())
-                .status("SCHEDULED").build());
+        // 5. Lưu thông tin Suất chiếu
+        Showtime showtime = Showtime.builder()
+                .movie(movie)
+                .room(room)
+                .startTime(request.getStartTime())
+                .endTime(calculatedEndTime)
+                .basePrice(request.getBasePrice())
+                .status("SCHEDULED")
+                .build();
 
-        List<Seat> seats = seatRepository.findByRoomIdOrderByRowNameAscSeatNumberAsc(room.getId());
-        List<SeatStatus> seatStatuses = seats.stream().map(seat -> SeatStatus.builder()
-                .showtime(showtime).seat(seat).status("AVAILABLE").build())
-                .collect(Collectors.toList());
+        final Showtime savedShowtime = showtimeRepository.save(showtime);
+
+        List<SeatStatus> seatStatuses = seats.stream().map(seat ->
+                SeatStatus.builder()
+                        .showtime(savedShowtime)
+                        .seat(seat)
+                        .status("AVAILABLE")
+                        .build()
+        ).collect(Collectors.toList());
+
         seatStatusRepository.saveAll(seatStatuses);
 
-        return convertToDto(showtime);
+        return convertToDto(savedShowtime);
     }
 
     @Transactional

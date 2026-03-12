@@ -18,4 +18,11 @@ public class TicketController extends BaseController {
     public BaseResponse<String> checkIn(@PathVariable String qrCode) {
         return wrapSuccess(ticketService.checkInTicket(qrCode));
     }
+
+    @PutMapping("/cancel/{qrCode}")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('STAFF')")
+    public BaseResponse<String> cancelSingleTicket(@PathVariable String qrCode) {
+        ticketService.cancelSingleTicket(qrCode);
+        return wrapSuccess("Hủy vé và giải phóng ghế thành công!");
+    }
 }

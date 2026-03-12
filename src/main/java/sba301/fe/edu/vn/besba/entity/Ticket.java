@@ -3,6 +3,8 @@ package sba301.fe.edu.vn.besba.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "tickets")
 @AllArgsConstructor
@@ -31,4 +33,10 @@ public class Ticket {
 
     @Column(name = "check_in_status")
     private Boolean checkInStatus = false;
+
+    @Column(name = "check_in_time")
+    private LocalDateTime checkInTime;
+
+    @Column(name = "is_cancelled")
+    private Boolean isCancelled = false;
 }
