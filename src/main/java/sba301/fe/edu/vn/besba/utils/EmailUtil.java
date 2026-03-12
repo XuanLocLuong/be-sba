@@ -4,7 +4,9 @@ import jakarta.mail.*;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import sba301.fe.edu.vn.besba.exception.CustomException;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
@@ -31,19 +33,13 @@ public class EmailUtil {
         return props;
     }
 
-    public boolean sendOTP(String toEmail, String otp, String name) {
-        try {
-            String subject = "Mã OTP Khôi Phục Mật Khẩu";
-            String content = buildOTPContent(otp, name);
-            return sendEmail(toEmail, subject, content);
-        } catch (Exception e) {
-            System.err.println("❌ Lỗi trong quá trình chuẩn bị OTP: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
+    public void sendOTP(String toEmail, String otp, String name) {
+        String subject = "Mã OTP Khôi Phục Mật Khẩu";
+        String content = buildOTPContent(otp, name);
+        sendEmail(toEmail, subject, content);
     }
 
-    public boolean sendEmail(String toEmail, String subject, String content) {
+    public void sendEmail(String toEmail, String subject, String content) {
         try {
             Properties props = getMailProperties();
             Session session = Session.getInstance(props, new Authenticator() {
@@ -62,32 +58,29 @@ public class EmailUtil {
 
             Transport.send(message);
             System.out.println("✅ Gửi email thành công đến: " + toEmail);
-            return true;
 
         } catch (AuthenticationFailedException e) {
-            // Lỗi này xảy ra do sai Email hoặc App Password
-            System.err.println("❌ Lỗi xác thực tài khoản Gmail (Kiểm tra lại App Password): " + e.getMessage());
-            e.printStackTrace();
-            return false;
+            System.err.println("❌ Lỗi xác thực: " + e.getMessage());
+
+            throw new CustomException(500, "Cấu hình email hệ thống bị lỗi (Sai App Password). Vui lòng liên hệ Admin!", HttpStatus.INTERNAL_SERVER_ERROR);
+
         } catch (MessagingException e) {
-            // Lỗi này xảy ra khi sai cấu hình Port, mạng nội bộ chặn SMTP...
-            System.err.println("❌ Lỗi kết nối đến máy chủ Mail (SMTP/Network): " + e.getMessage());
-            e.printStackTrace();
-            return false;
+            System.err.println("❌ Lỗi mạng/SMTP: " + e.getMessage());
+
+            throw new CustomException(500, "Không thể gửi mail lúc này (Lỗi máy chủ hoặc email của bạn không hợp lệ).", HttpStatus.INTERNAL_SERVER_ERROR);
+
         } catch (UnsupportedEncodingException e) {
+            System.err.println("❌ Lỗi encoding: " + e.getMessage());
+            throw new CustomException(500, "Lỗi định dạng email hệ thống.", HttpStatus.INTERNAL_SERVER_ERROR);
 
-            System.err.println("❌ Lỗi định dạng tên người gửi: " + e.getMessage());
-            e.printStackTrace();
-            return false;
         } catch (Exception e) {
-
-            System.err.println("❌ Lỗi không xác định khi gửi email: " + e.getMessage());
-            e.printStackTrace();
-            return false;
+            System.err.println("❌ Lỗi không xác định: " + e.getMessage());
+            throw new CustomException(500, "Có lỗi hệ thống xảy ra khi gửi email: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     private String buildOTPContent(String otp, String name) {
+
         try {
             return """
                 <!DOCTYPE html>
@@ -113,9 +106,7 @@ public class EmailUtil {
                 </div></body></html>
             """.formatted(FROM_NAME, name, otp, FROM_NAME);
         } catch (Exception e) {
-            System.err.println("❌ Lỗi khi render giao diện HTML cho OTP: " + e.getMessage());
-            e.printStackTrace();
-            return "";
+            return "Mã OTP của bạn là: " + otp;
         }
     }
 }

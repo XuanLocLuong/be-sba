@@ -67,16 +67,11 @@ public class AuthService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(404, "Không tìm thấy tài khoản với email này", HttpStatus.NOT_FOUND));
 
-        // Tạo mã OTP 6 số ngẫu nhiên
         String otp = String.format("%06d", new Random().nextInt(999999));
         user.setResetToken(otp);
         userRepository.save(user);
 
-        // Gửi email
-        boolean isSent = emailUtil.sendOTP(user.getEmail(), otp, user.getFullName());
-        if (!isSent) {
-            throw new CustomException(500, "Có lỗi xảy ra khi gửi email", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        emailUtil.sendOTP(user.getEmail(), otp, user.getFullName());
     }
 
     @Transactional
