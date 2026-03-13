@@ -22,4 +22,6 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
             "WHERE b.status IN ('PAID', 'COMPLETED') " +
             "GROUP BY b.showtime.movie.title")
     List<Object[]> getRevenueByMovie();
+
+    List<Booking> findByUserIdOrderByCreatedAtDesc(Integer userId);
 }

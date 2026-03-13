@@ -14,5 +14,5 @@ import java.util.List;
 public class BookingRequest {
     private Integer showtimeId;
     private List<Integer> seatIds;
-    private Integer voucherId;    // optional
+    private Integer voucherId;
 }

@@ -244,4 +244,10 @@ public class BookingService {
             ticketRepository.saveAll(tickets);
         }
     }
+
+    public List<BookingResponse> getMyBookings(Integer userId) {
+        return bookingRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .map(BookingResponse::fromEntity)
+                .toList();
+    }
 }

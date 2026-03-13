@@ -2,11 +2,13 @@ package sba301.fe.edu.vn.besba.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import sba301.fe.edu.vn.besba.base.BaseController;
 import sba301.fe.edu.vn.besba.base.BaseResponse;
 import sba301.fe.edu.vn.besba.dto.BookingRequest;
 import sba301.fe.edu.vn.besba.dto.response.BookingResponse;
+import sba301.fe.edu.vn.besba.security.UserPrincipal;
 import sba301.fe.edu.vn.besba.service.BookingService;
 import sba301.fe.edu.vn.besba.dto.response.BookingResponseStaff;
 import java.util.List;
@@ -36,6 +38,13 @@ public class BookingController extends BaseController {
         return wrapSuccess(null);
     }
 
+    @GetMapping("/bookings/my-bookings")
+    public BaseResponse<List<sba301.fe.edu.vn.besba.dto.response.BookingResponse>> getMyBookings(
+            @AuthenticationPrincipal UserPrincipal currentUser) {
+        Integer userId = currentUser.getId();
+        return wrapSuccess(bookingService.getMyBookings(userId));
+    }
+
     // --- ENDPOINTS CHO ADMIN/STAFF
 
     @GetMapping("/admin/bookings")
@@ -53,7 +62,6 @@ public class BookingController extends BaseController {
     @PutMapping("/admin/bookings/{id}/check-in")
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('STAFF')")
     public BaseResponse<String> checkInBookingByAdmin(@PathVariable Integer id) {
-        // Gọi hàm checkInBooking bên trong BookingService
         bookingService.checkInBooking(id);
         return wrapSuccess("Soát vé toàn bộ đơn thành công!");
     }

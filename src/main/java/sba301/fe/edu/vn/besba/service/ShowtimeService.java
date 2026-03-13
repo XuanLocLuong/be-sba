@@ -99,6 +99,7 @@ public class ShowtimeService {
                 .id(showtime.getId())
                 .movieId(showtime.getMovie().getId())
                 .movieTitle(showtime.getMovie().getTitle())
+                .posterUrl(showtime.getMovie().getPosterUrl())
                 .roomId(showtime.getRoom().getId())
                 .roomName(showtime.getRoom().getName())
                 .startTime(showtime.getStartTime())
