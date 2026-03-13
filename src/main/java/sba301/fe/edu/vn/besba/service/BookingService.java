@@ -153,7 +153,9 @@ public class BookingService {
 
         return sba301.fe.edu.vn.besba.dto.BookingResponse.builder()
                 .bookingId(booking.getId())
+                .totalAmount(booking.getTotalAmount())
                 .status(booking.getStatus())
+                .createdAt(booking.getCreatedAt())
                 .tickets(tickets.stream().map(t -> TicketResponse.builder()
                         .ticketId(t.getId())
                         .seatName(t.getSeat().getRowName() + t.getSeat().getSeatNumber())
@@ -249,5 +251,27 @@ public class BookingService {
         return bookingRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(BookingResponse::fromEntity)
                 .toList();
+    }
+
+    public sba301.fe.edu.vn.besba.dto.BookingResponse getBookingById(Integer bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new CustomException(404, "Booking not found", null));
+
+        List<TicketResponse> ticketResponses = ticketRepository.findByBooking_Id(bookingId).stream()
+                .map(t -> TicketResponse.builder()
+                        .ticketId(t.getId())
+                        .seatName(t.getSeat().getRowName() + t.getSeat().getSeatNumber())
+                        .price(t.getTicketPrice())
+                        .qrCode(t.getQrCode())
+                        .build())
+                .collect(Collectors.toList());
+
+        return sba301.fe.edu.vn.besba.dto.BookingResponse.builder()
+                .bookingId(booking.getId())
+                .totalAmount(booking.getTotalAmount())
+                .status(booking.getStatus())
+                .createdAt(booking.getCreatedAt())
+                .tickets(ticketResponses)
+                .build();
     }
 }
