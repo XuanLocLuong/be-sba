@@ -36,6 +36,10 @@ public class BookingController extends BaseController {
         return wrapSuccess(null);
     }
 
+    @GetMapping("/bookings/{bookingId}")
+    public BaseResponse<sba301.fe.edu.vn.besba.dto.BookingResponse> getBookingById(@PathVariable Integer bookingId) {
+        return wrapSuccess(bookingService.getBookingById(bookingId));
+    }
     // --- ENDPOINTS CHO ADMIN/STAFF
 
     @GetMapping("/admin/bookings")
