@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 import sba301.fe.edu.vn.besba.base.BaseController;
 import sba301.fe.edu.vn.besba.base.BaseResponse;
 import sba301.fe.edu.vn.besba.dto.BookingRequest;
-import sba301.fe.edu.vn.besba.dto.response.BookingResponse;
 import sba301.fe.edu.vn.besba.security.UserPrincipal;
 import sba301.fe.edu.vn.besba.service.BookingService;
 import sba301.fe.edu.vn.besba.dto.response.BookingResponseStaff;
@@ -49,6 +48,12 @@ public class BookingController extends BaseController {
     public BaseResponse<sba301.fe.edu.vn.besba.dto.BookingResponse> getBookingById(@PathVariable Integer bookingId) {
         return wrapSuccess(bookingService.getBookingById(bookingId));
     }
+
+    @GetMapping("/user/checkBookings")
+    public BaseResponse<Boolean> checkExistPendingBooking(){
+        return wrapSuccess(bookingService.checkExistPendingBooking());
+    }
+
     // --- ENDPOINTS CHO ADMIN/STAFF
 
     @GetMapping("/admin/bookings")
