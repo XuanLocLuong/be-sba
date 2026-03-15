@@ -2,8 +2,10 @@ package sba301.fe.edu.vn.besba.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import sba301.fe.edu.vn.besba.base.BaseController;
 import sba301.fe.edu.vn.besba.base.BaseResponse;
 import sba301.fe.edu.vn.besba.dto.request.MovieRequest;
@@ -47,18 +49,22 @@ public class MovieController extends BaseController {
         return wrapSuccess(movieService.getAllMovies());
     }
 
-    // Thêm phim mới
-    @PostMapping
+
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAuthority('ADMIN')")
-    public BaseResponse<MovieResponse> createMovie(@Valid @RequestBody MovieRequest request) {
-        return wrapSuccess(movieService.createMovie(request));
+    public BaseResponse<MovieResponse> createMovie(
+            @RequestPart("movie") @Valid MovieRequest movieRequest,
+            @RequestPart(value = "posterFile", required = false) MultipartFile posterFile) {
+        return wrapSuccess(movieService.createMovie(movieRequest, posterFile));
     }
 
-    // Cập nhật thông tin phim
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAuthority('ADMIN')")
-    public BaseResponse<MovieResponse> updateMovie(@PathVariable Integer id, @Valid @RequestBody MovieRequest request) {
-        return wrapSuccess(movieService.updateMovie(id, request));
+    public BaseResponse<MovieResponse> updateMovie(
+            @PathVariable Integer id,
+            @RequestPart("movie") @Valid MovieRequest movieRequest,
+            @RequestPart(value = "posterFile", required = false) MultipartFile posterFile) {
+        return wrapSuccess(movieService.updateMovie(id, movieRequest, posterFile));
     }
 
     // Xóa phim (Soft Delete -> Chuyển status sang INACTIVE)

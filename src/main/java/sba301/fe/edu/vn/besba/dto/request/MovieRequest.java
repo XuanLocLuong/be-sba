@@ -20,7 +20,6 @@ public class MovieRequest {
     @NotNull(message = "Ngày phát hành là bắt buộc")
     private LocalDate releaseDate;
 
-    @NotBlank(message = "Link ảnh Poster không được để trống")
     private String posterUrl;
 
     private String status; // UPCOMING, ONGOING, ENDED
