@@ -60,8 +60,11 @@ public class BookingService {
         }
 
         for (SeatStatus ss : seatStatuses) {
-            if (!"RESERVED".equals(ss.getStatus()) || ss.getUser() == null || !ss.getUser().getId().equals(user.getId())) {
-                throw new CustomException(400, "Ghế " + ss.getSeat().getRowName() + ss.getSeat().getSeatNumber() + " không phải do bạn giữ chỗ!", HttpStatus.BAD_REQUEST);
+            boolean isAvailable = "AVAILABLE".equals(ss.getStatus());
+            boolean isReservedByCurrentUser = "RESERVED".equals(ss.getStatus()) && ss.getUser() != null && ss.getUser().getId().equals(user.getId());
+
+            if (!isAvailable && !isReservedByCurrentUser) {
+                throw new CustomException(400, "Ghế " + ss.getSeat().getRowName() + ss.getSeat().getSeatNumber() + " không khả dụng hoặc đã bị giữ bởi người khác!", HttpStatus.BAD_REQUEST);
             }
         }
 
@@ -98,6 +101,8 @@ public class BookingService {
                 .build());
 
         for (SeatStatus ss : seatStatuses) {
+            ss.setStatus("RESERVED");
+            ss.setUser(user);
             ss.setBooking(booking);
             seatStatusRepository.save(ss);
         }
