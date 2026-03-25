@@ -16,4 +16,5 @@ public class RoomRequest {
 
     private Integer vipSeatsCount = 0;
     private Integer coupleSeatsCount = 0;
+    private String layoutType;
 }
