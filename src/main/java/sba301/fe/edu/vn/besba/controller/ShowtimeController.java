@@ -29,7 +29,7 @@ public class ShowtimeController extends BaseController {
     // --- ADMIN API
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('STAFF')")
     public BaseResponse<List<ShowtimeResponse>> getAllShowtimes() {
         return wrapSuccess(showtimeService.getAllShowtimes());
     }
