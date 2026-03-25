@@ -75,6 +75,7 @@ public class SeatService {
             SeatStatus seatStatus = seatStatusRepository.findByShowtime_IdAndSeat_Id(showtimeId, seatId)
                     .orElseThrow(() -> new CustomException(404, "Seat not found in this showtime", HttpStatus.NOT_FOUND));
 
+
             if (!"AVAILABLE".equals(seatStatus.getStatus())) {
                 throw new CustomException(400, "Seat " + seatId + " is not available", HttpStatus.BAD_REQUEST);
             }
@@ -106,4 +107,27 @@ public class SeatService {
             ss.setUser(null);
         }
     }
+
+    @Transactional
+    public void toggleSeatHold(Integer showtimeId, Integer seatId) {
+        UserPrincipal currentUser = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new CustomException(404, "User not found", HttpStatus.NOT_FOUND));
+
+        SeatStatus seatStatus = seatStatusRepository.findByShowtime_IdAndSeat_Id(showtimeId, seatId)
+                .orElseThrow(() -> new CustomException(404, "Seat not found in this showtime", HttpStatus.NOT_FOUND));
+
+        if ("AVAILABLE".equals(seatStatus.getStatus())) {
+            seatStatus.setStatus("RESERVED");
+            seatStatus.setUser(user);
+        } else if ("RESERVED".equals(seatStatus.getStatus()) && seatStatus.getUser() != null && seatStatus.getUser().getId().equals(user.getId())) {
+            seatStatus.setStatus("AVAILABLE");
+            seatStatus.setUser(null);
+        } else {
+            throw new CustomException(400, "Ghế này không khả dụng hoặc đã bị người khác giữ", HttpStatus.BAD_REQUEST);
+        }
+
+        seatStatusRepository.save(seatStatus);
+    }
+
 }

@@ -55,6 +55,10 @@ public class BookingService {
             throw new CustomException(400, "Một số ghế không tồn tại trong suất chiếu này", HttpStatus.BAD_REQUEST);
         }
 
+        for (SeatStatus seatStatus : seatStatuses) {
+            System.out.println("SeatStatus: " + seatStatus.toString());
+        }
+
         for (SeatStatus ss : seatStatuses) {
             if (!"RESERVED".equals(ss.getStatus()) || ss.getUser() == null || !ss.getUser().getId().equals(user.getId())) {
                 throw new CustomException(400, "Ghế " + ss.getSeat().getRowName() + ss.getSeat().getSeatNumber() + " không phải do bạn giữ chỗ!", HttpStatus.BAD_REQUEST);
@@ -71,6 +75,7 @@ public class BookingService {
         if (request.getVoucherId() != null) {
             voucher = voucherRepository.findById(request.getVoucherId())
                     .orElseThrow(() -> new CustomException(404, "Không tìm thấy Voucher", HttpStatus.NOT_FOUND));
+
 
             if (voucher.getExpiryDate().before(new java.util.Date())) {
                 throw new CustomException(400, "Voucher đã hết hạn", HttpStatus.BAD_REQUEST);
