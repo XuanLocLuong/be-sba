@@ -274,4 +274,13 @@ public class BookingService {
                 .tickets(ticketResponses)
                 .build();
     }
+
+    public Boolean checkExistPendingBooking() {
+        UserPrincipal currentUser = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new CustomException(404, "Không tìm thấy người dùng", HttpStatus.NOT_FOUND));
+
+        boolean hasPending = bookingRepository.existsByUserIdAndStatus(user.getId(), "PENDING");
+        return hasPending;
+    }
 }

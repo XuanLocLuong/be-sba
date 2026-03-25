@@ -7,6 +7,7 @@ import sba301.fe.edu.vn.besba.entity.Booking;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Integer> {
@@ -24,4 +25,7 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
     List<Object[]> getRevenueByMovie();
 
     List<Booking> findByUserIdOrderByCreatedAtDesc(Integer userId);
+
+    Optional<Booking> findById(Integer id);
+    boolean existsByUserIdAndStatus(Integer userId, String status);
 }

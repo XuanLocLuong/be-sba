@@ -2,8 +2,10 @@ package sba301.fe.edu.vn.besba.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import sba301.fe.edu.vn.besba.base.BaseController;
 import sba301.fe.edu.vn.besba.base.BaseResponse;
 import sba301.fe.edu.vn.besba.dto.request.VoucherRequest;
@@ -37,16 +39,21 @@ public class VoucherController extends BaseController {
         return wrapSuccess(voucherService.getAllVouchers());
     }
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAuthority('ADMIN')")
-    public BaseResponse<VoucherResponse> createVoucher(@Valid @RequestBody VoucherRequest request) {
-        return wrapSuccess(voucherService.createVoucher(request));
+    public BaseResponse<VoucherResponse> createVoucher(
+            @RequestPart("voucher") @Valid VoucherRequest request,
+            @RequestPart(value = "imageFile", required = false) MultipartFile imageFile) {
+        return wrapSuccess(voucherService.createVoucher(request, imageFile));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAuthority('ADMIN')")
-    public BaseResponse<VoucherResponse> updateVoucher(@PathVariable Integer id, @Valid @RequestBody VoucherRequest request) {
-        return wrapSuccess(voucherService.updateVoucher(id, request));
+    public BaseResponse<VoucherResponse> updateVoucher(
+            @PathVariable Integer id,
+            @RequestPart("voucher") @Valid VoucherRequest request,
+            @RequestPart(value = "imageFile", required = false) MultipartFile imageFile) {
+        return wrapSuccess(voucherService.updateVoucher(id, request, imageFile));
     }
 
     @DeleteMapping("/{id}")

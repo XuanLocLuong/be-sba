@@ -67,7 +67,7 @@ public class GoogleDriveService {
         permission.setRole("reader");
         driveService.permissions().create(uploadedFile.getId(), permission).execute();
 
-        return "https://drive.google.com/uc?id=" + uploadedFile.getId();
+        return "https://lh3.googleusercontent.com/d/" + uploadedFile.getId();
     }
 
     public void deleteImage(String fileId) throws IOException, GeneralSecurityException {
@@ -79,8 +79,8 @@ public class GoogleDriveService {
         if (imageUrl == null || imageUrl.isEmpty()) {
             return null;
         }
-        if (imageUrl.contains("id=")) {
-            return imageUrl.split("id=")[1];
+        if (imageUrl.contains("/d/")) {
+            return imageUrl.split("/d/")[1].split("/")[0];
         }
         return null;
     }

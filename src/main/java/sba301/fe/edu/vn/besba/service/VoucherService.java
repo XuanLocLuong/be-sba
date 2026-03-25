@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import sba301.fe.edu.vn.besba.dto.request.VoucherRequest;
 import sba301.fe.edu.vn.besba.dto.response.VoucherResponse;
 import sba301.fe.edu.vn.besba.entity.Voucher;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 public class VoucherService {
 
     private final VoucherRepository voucherRepository;
+    private final GoogleDriveService googleDriveService;
 
     public List<VoucherResponse> getActiveVoucher() {
         Date now = new Date();
@@ -36,9 +38,18 @@ public class VoucherService {
     }
 
     @Transactional
-    public VoucherResponse createVoucher(VoucherRequest request) {
+    public VoucherResponse createVoucher(VoucherRequest request, MultipartFile imageFile) {
         if (voucherRepository.existsByCode(request.getCode())) {
             throw new CustomException(400, "Mã Voucher đã tồn tại", HttpStatus.BAD_REQUEST);
+        }
+
+        String imageUrl = null;
+        if (imageFile != null && !imageFile.isEmpty()) {
+            try {
+                imageUrl = googleDriveService.uploadImage(imageFile);
+            } catch (Exception e) {
+                throw new CustomException(500, "Lỗi upload ảnh: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
         }
 
         Voucher voucher = Voucher.builder()
@@ -48,7 +59,7 @@ public class VoucherService {
                 .minOrderValue(request.getMinOrderValue())
                 .quantity(request.getQuantity())
                 .startDate(request.getStartDate())
-                .imageUrl(request.getImageUrl())
+                .imageUrl(imageUrl)
                 .expiryDate(request.getExpiryDate())
                 .status(1)
                 .usedCount(0)
@@ -58,7 +69,7 @@ public class VoucherService {
     }
 
     @Transactional
-    public VoucherResponse updateVoucher(Integer id, VoucherRequest request) {
+    public VoucherResponse updateVoucher(Integer id, VoucherRequest request, MultipartFile imageFile) {
         Voucher voucher = voucherRepository.findById(id)
                 .orElseThrow(() -> new CustomException(404, "Không tìm thấy Voucher", HttpStatus.NOT_FOUND));
 
@@ -66,13 +77,32 @@ public class VoucherService {
             throw new CustomException(400, "Mã Voucher đã tồn tại", HttpStatus.BAD_REQUEST);
         }
 
+        // Xử lý ảnh mới nếu có
+        if (imageFile != null && !imageFile.isEmpty()) {
+            try {
+                // Xóa ảnh cũ trên Drive (nếu có)
+                String oldUrl = voucher.getImageUrl();
+                if (oldUrl != null && oldUrl.contains("/d/")) {
+                    String fileId = googleDriveService.extractIdFromUrl(oldUrl);
+                    if (fileId != null) {
+                        googleDriveService.deleteImage(fileId);
+                    }
+                }
+                // Upload ảnh mới
+                String newUrl = googleDriveService.uploadImage(imageFile);
+                voucher.setImageUrl(newUrl);
+            } catch (Exception e) {
+                throw new CustomException(500, "Lỗi upload ảnh: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
+
+        // Cập nhật các trường khác
         voucher.setCode(request.getCode());
         voucher.setDiscountPercent(request.getDiscountPercent());
         voucher.setMaxDiscountAmount(request.getMaxDiscountAmount());
         voucher.setMinOrderValue(request.getMinOrderValue());
         voucher.setQuantity(request.getQuantity());
         voucher.setStartDate(request.getStartDate());
-        voucher.setImageUrl(request.getImageUrl());
         voucher.setExpiryDate(request.getExpiryDate());
 
         return convertToDto(voucherRepository.save(voucher));
@@ -82,7 +112,6 @@ public class VoucherService {
     public void deleteVoucher(Integer id) {
         Voucher voucher = voucherRepository.findById(id)
                 .orElseThrow(() -> new CustomException(404, "Không tìm thấy Voucher", HttpStatus.NOT_FOUND));
-
         voucher.setStatus(voucher.getStatus() == 1 ? 0 : 1);
         voucherRepository.save(voucher);
     }
