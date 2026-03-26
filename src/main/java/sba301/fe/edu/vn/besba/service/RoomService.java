@@ -56,20 +56,47 @@ public class RoomService {
             throw new CustomException(400, "Tổng số ghế VIP và Couple vượt quá tổng số ghế của phòng", HttpStatus.BAD_REQUEST);
         }
 
+        String layout = request.getLayoutType() != null ? request.getLayoutType() : "DEFAULT";
+        String[] seatTypes = new String[total];
+        for (int i = 0; i < total; i++) seatTypes[i] = "NORMAL";
+
+        if (layout.equals("VIP_FRONT")) {
+            for (int i = 0; i < vipCount; i++) seatTypes[i] = "VIP";
+            for (int i = total - coupleCount; i < total; i++) seatTypes[i] = "COUPLE";
+        } else if (layout.equals("COUPLE_FRONT")) {
+            for (int i = 0; i < coupleCount; i++) seatTypes[i] = "COUPLE";
+            for (int i = total - vipCount; i < total; i++) seatTypes[i] = "VIP";
+        } else if (layout.equals("VIP_SIDES")) {
+            for (int i = total - coupleCount; i < total; i++) seatTypes[i] = "COUPLE";
+            int vipsPlaced = 0;
+            for (int distance = 0; distance < 5 && vipsPlaced < vipCount; distance++) {
+                int leftCol = distance + 1;
+                int rightCol = 10 - distance;
+                for (int i = 0; i < total - coupleCount && vipsPlaced < vipCount; i++) {
+                    int col = (i % 10) + 1;
+                    if (col == leftCol || col == rightCol) {
+                        seatTypes[i] = "VIP";
+                        vipsPlaced++;
+                    }
+                }
+            }
+        } else { // DEFAULT
+            for (int i = normalCount; i < total - coupleCount; i++) seatTypes[i] = "VIP";
+            for (int i = total - coupleCount; i < total; i++) seatTypes[i] = "COUPLE";
+        }
+
         int seatsPerRow = 10;
         for (int i = 0; i < total; i++) {
             int rowIdx = i / seatsPerRow;
             int colIdx = (i % seatsPerRow) + 1;
             char rowChar = (char) ('A' + rowIdx);
 
-            String type = "NORMAL";
+            String type = seatTypes[i];
             Double additionalPrice = 0.0;
 
-            if (i >= total - coupleCount) {
-                type = "COUPLE";
+            if (type.equals("COUPLE")) {
                 additionalPrice = 50000.0;
-            } else if (i >= normalCount) {
-                type = "VIP";
+            } else if (type.equals("VIP")) {
                 additionalPrice = 20000.0;
             }
 

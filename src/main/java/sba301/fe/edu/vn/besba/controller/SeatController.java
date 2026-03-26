@@ -32,4 +32,10 @@ public class SeatController extends BaseController {
         return wrapSuccess(null);
     }
 
+    @PostMapping("/toggle-hold")
+    public BaseResponse<Void> toggleSeatHold(@RequestBody sba301.fe.edu.vn.besba.dto.ToggleSeatRequest request) {
+        seatService.toggleSeatHold(request.getShowtimeId(), request.getSeatId());
+        return wrapSuccess(null);
+    }
+
 }

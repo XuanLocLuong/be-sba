@@ -60,6 +60,10 @@ public class ShowtimeService {
             throw new CustomException(400, "Phòng chiếu đã có lịch vào khoảng thời gian này!", HttpStatus.BAD_REQUEST);
         }
 
+        if (request.getStartTime().isBefore(LocalDateTime.now().plusMinutes(30))) {
+            throw new CustomException(400, "Giờ bắt đầu phải lớn hơn hiện tại ít nhất 3 tiếng!", HttpStatus.BAD_REQUEST);
+        }
+
         // 5. Lưu thông tin Suất chiếu
         Showtime showtime = Showtime.builder()
                 .movie(movie)
